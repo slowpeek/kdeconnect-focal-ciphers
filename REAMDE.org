@@ -1,0 +1,120 @@
+* The problem
+
+kdeconnect in ubuntu 20.04+ can't see android devices lacking TLS 1.2
+support. In my case it was android 5.1 and 4.4 even though both
+devices have the same (the most recent by the time) app version, and
+they see each other and other devices running more recent android.
+
+The problem is specific to ubuntu and its derivatives. KDE neon is
+affected as well.
+
+It was introduced in =libssl1.1= package version
+=1.1.1d-2ubuntu2=. Here is the relevant part of the [[https://changelogs.ubuntu.com/changelogs/pool/main/o/openssl/openssl_1.1.1d-2ubuntu2/changelog][changelog]]:
+
+#+begin_quote
+Set OPENSSL_TLS_SECURITY_LEVEL=2 as compiled-in minimum security
+level. Change meaning of SECURITY_LEVEL=2 to prohibit TLS versions
+below 1.2 and update documentation. Previous default of 1, can be set
+by calling SSL_CTX_set_security_level(), SSL_set_security_level() or
+using ':@SECLEVEL=1' CipherString value in openssl.cfg.
+#+end_quote
+
+It is further explained in =/usr/share/doc/libssl1.1/NEWS.Debian.gz=:
+
+#+begin_quote
+openssl (1.1.1d-2ubuntu2) focal; urgency=medium
+
+The default security level for TLS connections was increased from
+level 1 to level 2. This moves from the 80 bit security level to the
+112 bit security level and will require 2048 bit or larger RSA and
+DHE keys, 224 bit or larger ECC keys, SHA-2, TLSv1.2 or DTLSv1.2.
+
+The system wide settings can be changed in
+/etc/ssl/openssl.cnf. Applications might also have a way to override
+the defaults.
+
+In the default /etc/ssl/openssl.cnf one can add sections to specify
+CipherString. The CipherString can be used to set the security
+level. Information about the security levels can be found in the
+SSL_CTX_set_security_level(3ssl) manpage. Other information can be
+found in ciphers(1ssl) and config(5ssl).
+
+Changing back the defaults in /etc/ssl/openssl.cnf to previous system wide
+defaults can be by adding at the top of the file:
+
+# System default
+openssl_conf = default_conf
+
+and adding at the bottom of the file:
+
+[default_conf]
+ssl_conf = ssl_sect
+
+[ssl_sect]
+system_default = system_default_sect
+
+[system_default_sect]
+CipherString = DEFAULT:@SECLEVEL=1
+
+It's recommended that you contact the remote site in case the defaults cause
+problems.
+
+-- Dimitri John Ledkov <xnox@ubuntu.com>  Wed, 08 Jan 2020 17:17:41 +0000
+#+end_quote
+
+* The fix
+
+- copy =/etc/xdg/autostart/org.kde.kdeconnect.daemon.desktop= into
+  =~/.config/autostart/=
+- replace the =Exec= command in the local copy with
+  =/usr/local/bin/start-kdeconnectd=
+- install the provided script =start-kdeconnectd= into
+  =/usr/local/bin/= (dont forget to make it executable)
+
+Relogin or reboot to apply it right away.
+
+* Extra problem (really old devices)
+
+kdeconnect since v1.4 prohibits use of obsolete ciphers by
+itself. Here is the corresponding commit:
+
+#+begin_src diff
+  commit 06d4cb580e46a7aee2bbfe253431602b981c2077
+  Author: Albert Vaca <albertvaka@gmail.com>
+  Date:   Wed Nov 7 16:28:26 2018 +0100
+
+      Disable bad cipher suites now that we dropped support for Android<14
+
+      BUG: 400722
+
+  diff --git a/core/backends/lan/lanlinkprovider.cpp b/core/backends/lan/lanlinkprovider.cpp
+  index a5994352..5094cf6f 100644
+  --- a/core/backends/lan/lanlinkprovider.cpp
+  +++ b/core/backends/lan/lanlinkprovider.cpp
+  @@ -421,16 +421,11 @@ void LanLinkProvider::deviceLinkDestroyed(QObject* destroyedDeviceLink)
+
+   void LanLinkProvider::configureSslSocket(QSslSocket* socket, const QString& deviceId, bool isDeviceTrusted)
+   {
+  -    // Setting supported ciphers manually
+  -    // Top 3 ciphers are for new Android devices, bottom two are for old Android devices
+  -    // FIXME : These cipher suites should be checked whether they are supported or not on device
+  +    // Setting supported ciphers manually, to match those on Android (FIXME: Test if this can be left unconfigured and still works for Android 4)
+       QList<QSslCipher> socketCiphers;
+       socketCiphers.append(QSslCipher(QStringLiteral("ECDHE-ECDSA-AES256-GCM-SHA384")));
+       socketCiphers.append(QSslCipher(QStringLiteral("ECDHE-ECDSA-AES128-GCM-SHA256")));
+       socketCiphers.append(QSslCipher(QStringLiteral("ECDHE-RSA-AES128-SHA")));
+  -    socketCiphers.append(QSslCipher(QStringLiteral("RC4-SHA")));
+  -    socketCiphers.append(QSslCipher(QStringLiteral("RC4-MD5")));
+  -    socketCiphers.append(QSslCipher(QStringLiteral("DHE-RSA-AES256-SHA")));
+
+       // Configure for ssl
+       QSslConfiguration sslConfig;
+#+end_src
+
+Because of that some old devices are still not visible to ubuntu
+20.04+ even with the =start-kdeconnectd= fix above. In my case it was
+android 2.3.6 running the most recent available app version 1.8.4.
+
+* Extra problem fix
+
+Revert the patch and recompile the package.

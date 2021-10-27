@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+# MIT license (c) 2021 https://github.com/slowpeek
+# Homepage: https://github.com/slowpeek/kdeconnect-focal-ciphers
+
+# Tailored for ubuntu 20.04+ and derivatives.
+
+set -eu
+
+bin=/usr/lib/x86_64-linux-gnu/libexec/kdeconnectd
+
+# Check if kdeconnect is installed.
+[[ -f $bin ]] || exit 0
+
+# Check if the deamon is up for the current user.
+pgrep -x kdeconnectd -u "$EUID" &>/dev/null && exit
+
+openssl_cnf=$TMPDIR/openssl.kdeconnectd.cnf
+
+# Copy-paste from /usr/share/doc/libssl1.1/NEWS.Debian.gz
+cat > "$openssl_cnf" <<EOF
+openssl_conf = default_conf
+
+$(< /etc/ssl/openssl.cnf)
+
+[default_conf]
+ssl_conf = ssl_sect
+
+[ssl_sect]
+system_default = system_default_sect
+
+[system_default_sect]
+CipherString = DEFAULT:@SECLEVEL=1
+EOF
+
+exec env OPENSSL_CONF="$openssl_cnf" "$bin"

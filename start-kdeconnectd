@@ -8,6 +8,7 @@
 set -eu
 
 bin=/usr/lib/x86_64-linux-gnu/libexec/kdeconnectd
+TMPDIR="${HOME}/.cache"
 
 # Check if kdeconnect is installed.
 [[ -f $bin ]] || exit 0

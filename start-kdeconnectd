@@ -8,7 +8,6 @@
 set -eu
 
 bin=/usr/lib/x86_64-linux-gnu/libexec/kdeconnectd
-TMPDIR="${HOME}/.cache"
 
 # Check if kdeconnect is installed.
 [[ -f $bin ]] || exit 0
@@ -16,7 +15,7 @@ TMPDIR="${HOME}/.cache"
 # Check if the deamon is up for the current user.
 pgrep -x kdeconnectd -u "$EUID" &>/dev/null && exit
 
-openssl_cnf=$TMPDIR/openssl.kdeconnectd.cnf
+openssl_cnf=$XDG_RUNTIME_DIR/openssl.kdeconnectd.cnf
 
 # Copy-paste from /usr/share/doc/libssl1.1/NEWS.Debian.gz
 cat > "$openssl_cnf" <<EOF

@@ -37,7 +37,7 @@ main() {
     # Check if kdeconnect is installed.
     [[ ! -f $bin ]] && exit
 
-    # Check if the deamon is up for the current user.
+    # Check if the daemon is up for the current user.
     pgrep -x kdeconnectd -u "$EUID" &>/dev/null && exit
 
     local ssl_pkg_version

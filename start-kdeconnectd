@@ -1,27 +1,19 @@
 #!/usr/bin/env bash
 
-# MIT license (c) 2021 https://github.com/slowpeek
+# MIT license (c) 2021-2022 https://github.com/slowpeek
 # Homepage: https://github.com/slowpeek/kdeconnect-focal-ciphers
 
 # Tailored for ubuntu 20.04+ and derivatives.
 
 set -eu
 
-bin=/usr/lib/x86_64-linux-gnu/libexec/kdeconnectd
+ssl_cnf=/etc/ssl/openssl.cnf
 
-# Check if kdeconnect is installed.
-[[ -f $bin ]] || exit 0
-
-# Check if the deamon is up for the current user.
-pgrep -x kdeconnectd -u "$EUID" &>/dev/null && exit
-
-openssl_cnf=$XDG_RUNTIME_DIR/openssl.kdeconnectd.cnf
-
-# Copy-paste from /usr/share/doc/libssl1.1/NEWS.Debian.gz
-cat > "$openssl_cnf" <<EOF
+ssl_conf_1x() {
+    cat <<EOF
 openssl_conf = default_conf
 
-$(< /etc/ssl/openssl.cnf)
+$(< "$ssl_cnf")
 
 [default_conf]
 ssl_conf = ssl_sect
@@ -32,5 +24,38 @@ system_default = system_default_sect
 [system_default_sect]
 CipherString = DEFAULT:@SECLEVEL=1
 EOF
+}
 
-exec env OPENSSL_CONF="$openssl_cnf" "$bin"
+ssl_conf_3x() {
+   sed -E 's,SECLEVEL=[[:digit:]],SECLEVEL=0,' "$ssl_cnf"
+}
+
+main() {
+    local bin=/usr/lib/x86_64-linux-gnu/libexec/kdeconnectd
+    local custom_ssl_cnf=$XDG_RUNTIME_DIR/openssl.kdeconnectd.cnf
+
+    # Check if kdeconnect is installed.
+    [[ ! -f $bin ]] && exit
+
+    # Check if the deamon is up for the current user.
+    pgrep -x kdeconnectd -u "$EUID" &>/dev/null && exit
+
+    local ssl_pkg_version
+    ssl_pkg_version=$(dpkg-query -Wf '${version}\n' openssl)
+
+    # It was good till 1.1.1d-2ubuntu2
+    dpkg --compare-versions "$ssl_pkg_version" lt 1.1.1d-2ubuntu2 && exit
+
+    case $ssl_pkg_version in
+        1.*)
+            ssl_conf_1x > "$custom_ssl_cnf" ;;
+        3.*)
+            ssl_conf_3x > "$custom_ssl_cnf" ;;
+        *)
+            exit 1 ;;
+    esac
+
+    exec env OPENSSL_CONF="$custom_ssl_cnf" "$bin"
+}
+
+[[ ! ${BASH_SOURCE[0]} == "$0" ]] || main "$@"

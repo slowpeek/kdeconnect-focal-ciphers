@@ -5,6 +5,12 @@ support. In my case it was android 5.1 and 4.4 even though both
 devices have the same (the most recent by the time) app version, and
 they see each other and other devices running more recent android.
 
+There are two cases for the problem:
+- ubuntu related (20.04 to 21.10, openssl 1.x)
+- openssl 3.x related (ubuntu 22.04+)
+
+** Ubuntu 20.04 to 21.10 case
+
 The problem is specific to ubuntu and its derivatives. KDE neon is
 affected as well.
 
@@ -60,6 +66,26 @@ It is further explained in =/usr/share/doc/libssl1.1/NEWS.Debian.gz=:
   cause problems.
 
   -- Dimitri John Ledkov <xnox@ubuntu.com>  Wed, 08 Jan 2020 17:17:41 +0000
+#+end_example
+
+** Ubuntu 22.04+ case
+
+It ships openssl 3.x. Relevant piece of the migration [[https://www.openssl.org/docs/man3.0/man7/migration_guide.html][guide]]:
+
+#+begin_example
+  The security strength of SHA1 and MD5 based signatures in TLS has been
+  reduced.
+
+  This results in SSL 3, TLS 1.0, TLS 1.1 and DTLS 1.0 no longer working
+  at the default security level of 1 and instead requires security level
+  0. The security level can be changed either using the cipher string
+  with @SECLEVEL, or calling SSL_CTX_set_security_level(3). This also
+  means that where the signature algorithms extension is missing from a
+  ClientHello then the handshake will fail in TLS 1.2 at security level
+  1. This is because, although this extension is optional, failing to
+  provide one means that OpenSSL will fallback to a default set of
+  signature algorithms. This default set requires the availability of
+  SHA1.
 #+end_example
 
 * The fix

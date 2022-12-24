@@ -11,17 +11,17 @@ affected as well.
 It was introduced in =libssl1.1= package version
 =1.1.1d-2ubuntu2=. Here is the relevant part of the [[https://changelogs.ubuntu.com/changelogs/pool/main/o/openssl/openssl_1.1.1d-2ubuntu2/changelog][changelog]]:
 
-#+begin_quote
+#+begin_example
 Set OPENSSL_TLS_SECURITY_LEVEL=2 as compiled-in minimum security
 level. Change meaning of SECURITY_LEVEL=2 to prohibit TLS versions
 below 1.2 and update documentation. Previous default of 1, can be set
 by calling SSL_CTX_set_security_level(), SSL_set_security_level() or
 using ':@SECLEVEL=1' CipherString value in openssl.cfg.
-#+end_quote
+#+end_example
 
 It is further explained in =/usr/share/doc/libssl1.1/NEWS.Debian.gz=:
 
-#+begin_quote
+#+begin_example
 openssl (1.1.1d-2ubuntu2) focal; urgency=medium
 
 The default security level for TLS connections was increased from
@@ -60,7 +60,7 @@ It's recommended that you contact the remote site in case the defaults cause
 problems.
 
 -- Dimitri John Ledkov <xnox@ubuntu.com>  Wed, 08 Jan 2020 17:17:41 +0000
-#+end_quote
+#+end_example
 
 * The fix
 

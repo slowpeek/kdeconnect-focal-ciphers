@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# MIT license (c) 2021-2022 https://github.com/slowpeek
+# MIT license (c) 2021-2024 https://github.com/slowpeek
 # Homepage: https://github.com/slowpeek/kdeconnect-focal-ciphers
 
 # Tailored for ubuntu 20.04+ and derivatives.
@@ -58,4 +58,4 @@ main() {
     exec env OPENSSL_CONF="$custom_ssl_cnf" "$bin"
 }
 
-[[ ! ${BASH_SOURCE[0]} == "$0" ]] || main "$@"
+[[ ! ${BASH_SOURCE[0]##*/} == "${0##*/}" ]] || main "$@"

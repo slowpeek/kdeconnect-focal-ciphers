@@ -8,27 +8,7 @@
 set -eu
 
 ssl_cnf=/etc/ssl/openssl.cnf
-
-ssl_conf_1x() {
-    cat <<EOF
-openssl_conf = default_conf
-
-$(< "$ssl_cnf")
-
-[default_conf]
-ssl_conf = ssl_sect
-
-[ssl_sect]
-system_default = system_default_sect
-
-[system_default_sect]
-CipherString = DEFAULT:@SECLEVEL=1
-EOF
-}
-
-ssl_conf_3x() {
-   sed -E 's,SECLEVEL=[[:digit:]],SECLEVEL=0,' "$ssl_cnf"
-}
+SELF_DIR=$(dirname "$(readlink -f "$0")")
 
 main() {
     local bin=/usr/lib/x86_64-linux-gnu/libexec/kdeconnectd
@@ -46,16 +26,15 @@ main() {
     # It was good till 1.1.1d-2ubuntu2
     dpkg --compare-versions "$ssl_pkg_version" lt 1.1.1d-2ubuntu2 && exit
 
-    case $ssl_pkg_version in
-        1.*)
-            ssl_conf_1x > "$custom_ssl_cnf" ;;
-        3.*)
-            ssl_conf_3x > "$custom_ssl_cnf" ;;
-        *)
-            exit 1 ;;
-    esac
+    local patched_ssl_cnf=$SELF_DIR/cnf/patched/$(md5sum "$ssl_cnf" | awk '{ print $1 }')
+    local env=()
 
-    exec env OPENSSL_CONF="$custom_ssl_cnf" "$bin"
+    if [[ -f $patched_ssl_cnf ]]; then
+        cat "$patched_ssl_cnf" > "$custom_ssl_cnf"
+        env+=(env OPENSSL_CONF="$custom_ssl_cnf")
+    fi
+
+    exec "${env[@]}" "$bin"
 }
 
 [[ ! ${BASH_SOURCE[0]##*/} == "${0##*/}" ]] || main "$@"

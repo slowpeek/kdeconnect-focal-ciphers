@@ -19,7 +19,7 @@ main() {
 
     local custom_ssl_cnf=$XDG_RUNTIME_DIR/openssl.kdeconnectd.cnf
 
-    # Check if the daemon is up for the current user.
+    # Do nothing, if the daemon is up for the current user.
     pgrep -x kdeconnectd -u "$EUID" &>/dev/null && exit
 
     local ssl_pkg_version

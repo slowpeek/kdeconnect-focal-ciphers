@@ -11,11 +11,13 @@ ssl_cnf=/etc/ssl/openssl.cnf
 SELF_DIR=$(dirname "$(readlink -f "$0")")
 
 main() {
-    local bin=/usr/lib/x86_64-linux-gnu/libexec/kdeconnectd
-    local custom_ssl_cnf=$XDG_RUNTIME_DIR/openssl.kdeconnectd.cnf
+    local bin
+    for bin in /usr/lib/*/libexec/kdeconnectd; do
+        [[ -f $bin ]] || exit 0
+        break
+    done
 
-    # Check if kdeconnect is installed.
-    [[ ! -f $bin ]] && exit
+    local custom_ssl_cnf=$XDG_RUNTIME_DIR/openssl.kdeconnectd.cnf
 
     # Check if the daemon is up for the current user.
     pgrep -x kdeconnectd -u "$EUID" &>/dev/null && exit
@@ -26,7 +28,8 @@ main() {
     # It was good till 1.1.1d-2ubuntu2
     dpkg --compare-versions "$ssl_pkg_version" lt 1.1.1d-2ubuntu2 && exit
 
-    local patched_ssl_cnf=$SELF_DIR/cnf/patched/$(md5sum "$ssl_cnf" | awk '{ print $1 }')
+    local patched_ssl_cnf
+    patched_ssl_cnf=$SELF_DIR/cnf/patched/$(md5sum "$ssl_cnf" | awk '{ print $1 }')
     local env=()
 
     if [[ -f $patched_ssl_cnf ]]; then

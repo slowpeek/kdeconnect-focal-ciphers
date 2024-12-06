@@ -5,13 +5,22 @@ support. In my case it was android 5.1 and 4.4 even though both
 devices have the same (the most recent by the time) app version, and
 they see each other and other devices running more recent android.
 
-There are two cases for the problem:
-- ubuntu related (20.04 to 21.10, openssl 1.x)
-- openssl 3.x related (ubuntu 22.04+)
+* The fix
 
-** Ubuntu 20.04 to 21.10 case
+- copy =/etc/xdg/autostart/org.kde.kdeconnect.daemon.desktop= into
+  =~/.config/autostart/=
+- replace the =Exec= command in the local copy with
+  =/usr/local/bin/start-kdeconnectd=
+- install the provided script =start-kdeconnectd= into
+  =/usr/local/bin/= (dont forget to make it executable)
 
-The problem is specific to ubuntu and its derivatives. KDE neon is
+Relogin or reboot to apply it right away.
+
+* Tech details
+
+** Ubuntu 20.04 to 21.10
+
+The problem is specific to ubuntu and its derivatives. KDE neon was
 affected as well.
 
 It was introduced in =libssl1.1= package version
@@ -68,7 +77,7 @@ It is further explained in =/usr/share/doc/libssl1.1/NEWS.Debian.gz=:
   -- Dimitri John Ledkov <xnox@ubuntu.com>  Wed, 08 Jan 2020 17:17:41 +0000
 #+end_example
 
-** Ubuntu 22.04+ case
+** Ubuntu 22.04+
 
 It ships openssl 3.x. Relevant piece of the migration [[https://www.openssl.org/docs/man3.0/man7/migration_guide.html][guide]]:
 
@@ -88,20 +97,9 @@ It ships openssl 3.x. Relevant piece of the migration [[https://www.openssl.org/
   SHA1.
 #+end_example
 
-* The fix
+** Really old devices
 
-- copy =/etc/xdg/autostart/org.kde.kdeconnect.daemon.desktop= into
-  =~/.config/autostart/=
-- replace the =Exec= command in the local copy with
-  =/usr/local/bin/start-kdeconnectd=
-- install the provided script =start-kdeconnectd= into
-  =/usr/local/bin/= (dont forget to make it executable)
-
-Relogin or reboot to apply it right away.
-
-* Extra problem (really old devices)
-
-kdeconnect since v1.4 prohibits use of obsolete ciphers by
+Since kdeconnect v1.4, it prohibits the use of obsolete ciphers by
 itself. Here is the corresponding commit:
 
 #+begin_src diff
@@ -141,6 +139,4 @@ Because of that some old devices are still not visible to ubuntu
 20.04+ even with the =start-kdeconnectd= fix above. In my case it was
 android 2.3.6 running the most recent available app version 1.8.4.
 
-* Extra problem fix
-
-Revert the patch and recompile the package.
+The only way to solve this is to revert the patch and recompile the package.

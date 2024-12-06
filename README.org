@@ -7,12 +7,11 @@ other devices running more recent android.
 
 * The fix
 
+- clone the repo into =/opt/=
 - copy =/etc/xdg/autostart/org.kde.kdeconnect.daemon.desktop= into
   =~/.config/autostart/=
 - replace the =Exec= command in the local copy with
-  =/usr/local/bin/start-kdeconnectd=
-- install the provided script =start-kdeconnectd= into =/usr/local/bin/= (dont
-  forget to make it executable)
+  =/opt/kdeconnect-focal-ciphers/start-kdeconnectd=
 
 Relogin or reboot to apply it right away.
 

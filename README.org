@@ -15,6 +15,26 @@ other devices running more recent android.
 
 Relogin or reboot to apply it right away.
 
+** Notice on custom openssl configs
+
+The script comes with patched stock openssl configs. You can see which versions
+of the stock configs were used under the =cnf/= dir (I'll try to keep it
+current). The configs were picked from X, X-updates and X-security suites, thats
+why there are usually more than one per ubuntu version.
+
+On start, the script hashes your =/etc/ssl/openssl.cnf= with =md5sum= and picks
+the matched config from =cnf/patched/=. If your config is not in pristine
+condition, it would not match anything. In this case:
+
+- find your ubuntu version in =cnf/=
+- pick one of the configs there to use (likely, the same version as =apt policy
+  openssl | grep -i installed=)
+- hash the picked config with =md5sum=. Let it be =HASH_STOCK=
+- hash your config with =md5sum=. Let it be =HASH_MY=
+- in =cnf/patched/=, symlink =HASH_MY= to =HASH_STOCK=
+
+With that, the script would match your config on start and apply the fix.
+
 * Tech details
 
 ** Ubuntu 20.04 to 21.10
